@@ -1,6 +1,21 @@
-import { useState, useEffect, useCallback } from 'react';
-import { ChevronLeft, ChevronRight, Maximize, Minimize, Grid3X3 } from 'lucide-react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { flushSync } from 'react-dom';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
+import { ChevronLeft, ChevronRight, Maximize, Minimize, Grid3X3, Download, Loader2 } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { toast } from '@/components/ui/use-toast';
 
 import Slide01Cover from '../components/slides/Slide01Cover';
 import Slide02Objectives from '../components/slides/Slide02Objectives';
@@ -46,28 +61,199 @@ const slideTitles = [
   'Trabajo autónomo', 'Revisión grupal', 'Sprint — documento guía', 'Recap', 'Traductor de tono + CTA', 'Cierre',
 ];
 
+/** Espera tras cambiar de slide (React paint + Framer Motion). El clon PDF fuerza opacidad en onclone. */
+const SLIDE_RENDER_MS = 450;
+
+/** En el documento clonado por html2canvas: quita animaciones y opacidad 0 (fade-up, motion, etc.). */
+function normalizeSubtreeForPdfCapture(root) {
+  if (!root || typeof HTMLElement === "undefined") return;
+  const win = root.ownerDocument?.defaultView;
+  if (!win) return;
+  const walk = (node) => {
+    if (!(node instanceof win.HTMLElement)) return;
+    node.style.animation = "none";
+    node.style.transition = "none";
+    node.style.opacity = "1";
+    node.style.transform = "none";
+    node.style.filter = "none";
+    node.style.setProperty("-webkit-filter", "none");
+    node.style.visibility = "visible";
+    node.style.setProperty("-webkit-backdrop-filter", "none");
+    node.style.setProperty("backdrop-filter", "none");
+  };
+  walk(root);
+  root.querySelectorAll("*").forEach(walk);
+}
+
+function onPdfCaptureClone(clonedDoc) {
+  const root = clonedDoc.querySelector("[data-pdf-capture-root]");
+  if (root instanceof clonedDoc.defaultView.HTMLElement) {
+    normalizeSubtreeForPdfCapture(root);
+  }
+}
+
+async function nextPaint() {
+  await new Promise((r) => {
+    requestAnimationFrame(() => requestAnimationFrame(r));
+  });
+}
+
+function fitImageOnPage(pdf, imgData, imgW, imgH) {
+  const pageW = pdf.internal.pageSize.getWidth();
+  const pageH = pdf.internal.pageSize.getHeight();
+  const imgAspect = imgW / imgH;
+  const pageAspect = pageW / pageH;
+  let w;
+  let h;
+  let x;
+  let y;
+  if (imgAspect > pageAspect) {
+    w = pageW;
+    h = pageW / imgAspect;
+    x = 0;
+    y = (pageH - h) / 2;
+  } else {
+    h = pageH;
+    w = pageH * imgAspect;
+    x = (pageW - w) / 2;
+    y = 0;
+  }
+  pdf.addImage(imgData, 'JPEG', x, y, w, h, undefined, 'FAST');
+}
+
 export default function Presentation() {
   const [current, setCurrent] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showGrid, setShowGrid] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const slideCaptureRef = useRef(null);
+  const exportingRef = useRef(false);
 
   const goNext = useCallback(() => {
+    if (exportingRef.current) return;
     setCurrent((prev) => Math.min(prev + 1, TOTAL - 1));
     setShowGrid(false);
   }, []);
 
   const goPrev = useCallback(() => {
+    if (exportingRef.current) return;
     setCurrent((prev) => Math.max(prev - 1, 0));
     setShowGrid(false);
   }, []);
 
   const goTo = useCallback((index) => {
+    if (exportingRef.current) return;
     setCurrent(index);
     setShowGrid(false);
   }, []);
 
+  const exportPdf = useCallback(async () => {
+    if (exportingRef.current) return;
+
+    const el =
+      slideCaptureRef.current ??
+      (typeof document !== 'undefined'
+        ? document.querySelector('[data-pdf-capture-root]')
+        : null);
+
+    if (!el || !(el instanceof HTMLElement)) {
+      toast({
+        variant: 'destructive',
+        title: 'No se puede exportar',
+        description:
+          'No se encontró el área de la diapositiva. Cierra la vista de rejilla (G) y recarga la página si sigue fallando.',
+      });
+      return;
+    }
+
+    exportingRef.current = true;
+    setIsExporting(true);
+    const savedIndex = current;
+    let progressToast = null;
+
+    try {
+      if (typeof document !== "undefined" && document.fonts?.ready) {
+        await document.fonts.ready.catch(() => {});
+      }
+
+      if (typeof document !== "undefined") {
+        document.documentElement.setAttribute("data-pdf-export", "1");
+      }
+
+      progressToast = toast({
+        title: "Generando PDF",
+        description: `Preparando 24 diapositivas...`,
+      });
+
+      const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+
+      for (let i = 0; i < TOTAL; i++) {
+        flushSync(() => {
+          setCurrent(i);
+        });
+        
+        // Esperamos a que React renderice y las animaciones se detengan
+        await new Promise((r) => setTimeout(r, SLIDE_RENDER_MS));
+        await nextPaint();
+
+        const canvas = await html2canvas(el, {
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          logging: false,
+          backgroundColor: "#0a0a0a",
+          onclone: onPdfCaptureClone,
+        });
+
+        const imgData = canvas.toDataURL("image/jpeg", 0.88);
+        if (i > 0) pdf.addPage();
+        fitImageOnPage(pdf, imgData, canvas.width, canvas.height);
+
+        progressToast?.update({
+          id: progressToast.id,
+          title: "Generando PDF",
+          description: `${i + 1} / ${TOTAL} diapositivas capturadas`,
+        });
+      }
+
+      pdf.save("voz-de-marca-ia.pdf");
+
+      progressToast?.update({
+        id: progressToast.id,
+        title: "PDF listo",
+        description: "La descarga ha comenzado con éxito.",
+      });
+      window.setTimeout(() => progressToast?.dismiss(), 5000);
+    } catch (err) {
+      console.error(err);
+      progressToast?.dismiss();
+      toast({
+        variant: "destructive",
+        title: "Error al exportar",
+        description: err instanceof Error ? err.message : "Vuelve a intentarlo en unos segundos.",
+      });
+    } finally {
+      if (typeof document !== "undefined") {
+        document.documentElement.removeAttribute("data-pdf-export");
+      }
+      try {
+        flushSync(() => {
+          setCurrent(savedIndex);
+        });
+      } catch {
+        setCurrent(savedIndex);
+      }
+      exportingRef.current = false;
+      setIsExporting(false);
+    }
+  }, [current]);
+
   useEffect(() => {
     const handleKey = (e) => {
+      if (exportingRef.current) {
+        e.preventDefault();
+        return;
+      }
       if (e.key === 'ArrowRight' || e.key === ' ') {
         e.preventDefault();
         goNext();
@@ -137,42 +323,61 @@ export default function Presentation() {
   }
 
   return (
-    <div className="h-screen w-screen flex flex-col bg-[#0a0a0a] overflow-hidden">
-      <div className="flex-1 relative overflow-hidden">
+    <div className="relative isolate h-screen w-screen flex flex-col bg-[#0a0a0a] overflow-hidden">
+      {/* Slide area */}
+      <div className="relative z-0 min-h-0 flex-1 overflow-hidden">
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-full h-full max-w-[100vw] max-h-[100vh] aspect-video">
-            <AnimatePresence mode="wait">
+          <div
+            ref={slideCaptureRef}
+            data-pdf-capture-root
+            className="aspect-video h-full w-full max-h-full max-w-full"
+          >
+            {isExporting ? (
               <CurrentSlide key={current} total={TOTAL} />
-            </AnimatePresence>
+            ) : (
+              <AnimatePresence mode="wait">
+                <CurrentSlide key={current} total={TOTAL} />
+              </AnimatePresence>
+            )}
           </div>
         </div>
 
+        {/* Navigation arrows */}
         <button
           type="button"
           onClick={goPrev}
-          disabled={current === 0}
-          className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-md flex items-center justify-center transition-all disabled:opacity-0 z-20 shadow-lg border border-white/10"
+          disabled={current === 0 || isExporting}
+          className="absolute left-4 top-1/2 z-[50] flex h-12 w-12 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-border/50 bg-white text-slate-900 shadow-xl transition-all hover:scale-110 active:scale-95 disabled:cursor-not-allowed disabled:opacity-0"
         >
-          <ChevronLeft className="w-6 h-6 text-white" />
+          <ChevronLeft className="w-6 h-6" />
         </button>
         <button
           type="button"
           onClick={goNext}
-          disabled={current === TOTAL - 1}
-          className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-md flex items-center justify-center transition-all disabled:opacity-0 z-20 shadow-lg border border-white/10"
+          disabled={current === TOTAL - 1 || isExporting}
+          className="absolute right-4 top-1/2 z-[50] flex h-12 w-12 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-border/50 bg-white text-slate-900 shadow-xl transition-all hover:scale-110 active:scale-95 disabled:cursor-not-allowed disabled:opacity-0"
         >
-          <ChevronRight className="w-6 h-6 text-white" />
+          <ChevronRight className="w-6 h-6" />
         </button>
       </div>
 
-      <div className="h-12 bg-[#0a0a0a] border-t border-white/5 flex items-center justify-between px-4 z-20">
+      {/* Bottom bar */}
+      <footer className="relative z-[200] flex h-12 shrink-0 cursor-default items-center justify-between border-t border-white/5 bg-[#0a0a0a] px-4">
         <div className="flex items-center gap-3">
-          <button type="button" onClick={() => setShowGrid(true)} className="text-white/40 hover:text-white/80 transition-colors">
+          <button
+            type="button"
+            onClick={() => setShowGrid(true)}
+            disabled={isExporting}
+            className="cursor-pointer rounded p-1.5 text-white/40 transition-colors hover:bg-white/5 hover:text-white/80 disabled:pointer-events-none disabled:opacity-30"
+          >
             <Grid3X3 className="w-4 h-4" />
           </button>
-          <span className="font-body text-xs text-white/40 truncate max-w-[200px]">{slideTitles[current]}</span>
+          <span className="font-body text-xs text-white/40">
+            {slideTitles[current]}
+          </span>
         </div>
 
+        {/* Progress bar */}
         <div className="flex-1 max-w-xs mx-6">
           <div className="h-1 bg-white/10 rounded-full overflow-hidden">
             <div
@@ -186,11 +391,51 @@ export default function Presentation() {
           <span className="font-heading text-xs text-white/40 tabular-nums">
             {current + 1} / {TOTAL}
           </span>
-          <button type="button" onClick={toggleFullscreen} className="text-white/40 hover:text-white/80 transition-colors">
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <button
+                type="button"
+                disabled={isExporting}
+                title="Descargar todas las diapositivas en PDF"
+                className="cursor-pointer rounded p-1.5 text-white/40 transition-colors hover:bg-white/5 hover:text-white/80 disabled:pointer-events-none disabled:opacity-40"
+                aria-label="Exportar presentación a PDF"
+              >
+                {isExporting ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Download className="w-4 h-4" />
+                )}
+              </button>
+            </AlertDialogTrigger>
+            <AlertDialogContent className="bg-slate-900 border-white/10 text-white">
+              <AlertDialogHeader>
+                <AlertDialogTitle className="text-xl font-heading">¿Exportar presentación a PDF?</AlertDialogTitle>
+                <AlertDialogDescription className="text-slate-400 font-body">
+                  Este proceso capturará las 24 diapositivas una a una. Tardará aproximadamente 15-20 segundos.
+                  Por favor, no cierres la pestaña hasta que termine.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel className="bg-white/5 border-white/10 text-white hover:bg-white/10">Cancelar</AlertDialogCancel>
+                <AlertDialogAction 
+                  onClick={() => void exportPdf()}
+                  className="bg-primary text-white hover:bg-primary/90"
+                >
+                  Comenzar descarga
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+          <button
+            type="button"
+            onClick={toggleFullscreen}
+            disabled={isExporting}
+            className="cursor-pointer rounded p-1.5 text-white/40 transition-colors hover:bg-white/5 hover:text-white/80 disabled:pointer-events-none disabled:opacity-30"
+          >
             {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
           </button>
         </div>
-      </div>
+      </footer>
     </div>
   );
 }

@@ -1,7 +1,7 @@
-import SlideShell from './SlideShell';
-import SlideNumber from './SlideNumber';
-import BentoCard from './BentoCard';
 import { UserCircle2 } from 'lucide-react';
+import BentoCard from './BentoCard';
+import SlideNumber from './SlideNumber';
+import SlideShell from './SlideShell';
 
 export default function Slide12Step2Intro({ total }) {
   return (
@@ -34,9 +34,6 @@ export default function Slide12Step2Intro({ total }) {
                 «Objetivo: visualizar la marca como una persona real.»
               </p>
               <div className="mt-6 h-px w-12 bg-primary/20" />
-              <p className="mt-6 text-lg text-muted-foreground font-medium leading-relaxed">
-                Si el arquetipo no convence: pedid <strong className="text-primary font-bold">2 alternativos</strong> y comparad.
-              </p>
             </BentoCard>
           </div>
         </div>

@@ -1,7 +1,7 @@
-import SlideShell from './SlideShell';
-import SlideNumber from './SlideNumber';
+import { GraduationCap, Smile, Users, Zap } from 'lucide-react';
 import BentoCard from './BentoCard';
-import { Smile, GraduationCap, Users, Zap } from 'lucide-react';
+import SlideNumber from './SlideNumber';
+import SlideShell from './SlideShell';
 
 export default function Slide07DinnerFramework({ total }) {
   return (
@@ -36,11 +36,6 @@ export default function Slide07DinnerFramework({ total }) {
             </div>
           </div>
         </BentoCard>
-
-        <p className="text-lg text-muted-foreground font-medium flex items-center gap-2 fade-up fade-up-4 bg-muted/50 w-fit px-6 py-3 rounded-full">
-          <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
-          Engagement: pedid que respondan en chat con una palabra que represente a su marca.
-        </p>
       </div>
       <SlideNumber current={7} total={total || 24} />
     </SlideShell>

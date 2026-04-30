@@ -1,7 +1,7 @@
-import SlideShell from './SlideShell';
-import SlideNumber from './SlideNumber';
+import { AlertCircle, HelpCircle, Search } from 'lucide-react';
 import BentoCard from './BentoCard';
-import { HelpCircle, Search, AlertCircle } from 'lucide-react';
+import SlideNumber from './SlideNumber';
+import SlideShell from './SlideShell';
 
 export default function Slide04ActivationGame({ total }) {
   return (
@@ -17,7 +17,7 @@ export default function Slide04ActivationGame({ total }) {
           <div className="flex gap-4 items-start">
             <HelpCircle className="w-10 h-10 text-primary shrink-0 mt-1" />
             <div>
-              <p className="text-lg font-800 text-foreground mb-2">Pregunta al grupo</p>
+              <p className="text-lg font-800 text-foreground mb-2">Pregunta</p>
               <p className="text-xl text-muted-foreground leading-relaxed">
                 ¿Alguien puede identificar a quién pertenece cada texto? ¿Se nota una <strong className="text-foreground">personalidad</strong> detrás?
               </p>

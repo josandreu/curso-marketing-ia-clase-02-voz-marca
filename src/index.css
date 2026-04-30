@@ -173,3 +173,16 @@
 .fade-up-6 {
   animation-delay: 0.6s;
 }
+
+/* Durante exportación PDF: texto visible para captura (html2canvas no respeta bien fade-up / motion). */
+html[data-pdf-export="1"] [data-pdf-capture-root] .fade-up {
+  animation: none !important;
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+html[data-pdf-export="1"] [data-pdf-capture-root] .slide-enter {
+  animation: none !important;
+  opacity: 1 !important;
+  transform: none !important;
+}

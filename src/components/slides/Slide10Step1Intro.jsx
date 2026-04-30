@@ -1,7 +1,7 @@
-import SlideShell from './SlideShell';
-import SlideNumber from './SlideNumber';
-import BentoCard from './BentoCard';
 import { ScanSearch } from 'lucide-react';
+import BentoCard from './BentoCard';
+import SlideNumber from './SlideNumber';
+import SlideShell from './SlideShell';
 
 export default function Slide10Step1Intro({ total }) {
   return (
@@ -38,10 +38,6 @@ export default function Slide10Step1Intro({ total }) {
                 «Esto es un espejo: cómo suena vuestra marca ahora. A muchos os sorprenderá — y no siempre para bien».
               </p>
             </div>
-            
-            <p className="text-sm text-muted-foreground font-medium pl-2">
-              El profesor ejecuta el prompt con un texto propio para mostrar el contraste.
-            </p>
           </div>
         </div>
       </div>

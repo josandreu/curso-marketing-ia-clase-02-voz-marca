@@ -1,7 +1,7 @@
-import SlideShell from './SlideShell';
-import SlideNumber from './SlideNumber';
-import BentoCard from './BentoCard';
 import { Users } from 'lucide-react';
+import BentoCard from './BentoCard';
+import SlideNumber from './SlideNumber';
+import SlideShell from './SlideShell';
 
 export default function Slide20GroupReview({ total }) {
   return (
@@ -22,11 +22,7 @@ export default function Slide20GroupReview({ total }) {
               <p className="text-foreground text-xl font-900 leading-tight uppercase tracking-tight">La Dinámica</p>
             </div>
             <p className="text-xl text-foreground font-medium mb-4">Compartir tabla + leer la bio de Instagram en voz alta.</p>
-            <div className="h-px w-full bg-primary/10 my-6" />
-            <p className="text-sm font-heading font-bold text-primary uppercase tracking-widest mb-4">Feedback del profesor</p>
-            <p className="text-lg text-muted-foreground italic leading-relaxed">
-              «Esta bio suena a plantilla — ¿dónde está el adjetivo irreverente que definiste?»<br/>«Perfecto para LinkedIn, demasiado formal para Instagram».
-            </p>
+            <p className="text-lg text-muted-foreground font-medium leading-relaxed">Si el arquetipo no convence: pedid <strong className="text-primary font-bold">2 alternativos</strong> y comparad.</p>
           </BentoCard>
 
           <BentoCard accent className="p-8 md:p-10 border-l-4 border-l-primary flex flex-col h-full bg-primary/5">
