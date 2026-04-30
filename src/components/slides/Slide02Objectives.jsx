@@ -20,8 +20,8 @@ export default function Slide02Objectives({ total }) {
                 <Target className="w-6 h-6 text-primary" />
               </div>
               <div>
-                <h3 className="font-heading text-lg font-800 uppercase tracking-wide text-primary mb-2">El Objetivo</h3>
-                <p className="text-lg text-muted-foreground leading-relaxed font-medium">
+                <h3 className="font-heading text-xl font-900 uppercase tracking-wide text-primary mb-3">El Objetivo</h3>
+                <p className="text-xl text-foreground/80 leading-relaxed font-medium">
                   Crear una guía de tono y personalidad completa, con arquetipo, tabla por contextos y ejemplos con IA — lista para cualquier canal.
                 </p>
               </div>
@@ -32,8 +32,8 @@ export default function Slide02Objectives({ total }) {
                 <FileText className="w-6 h-6 text-primary" />
               </div>
               <div>
-                <h3 className="font-heading text-lg font-800 uppercase tracking-wide text-primary mb-2">El Documento</h3>
-                <p className="text-lg text-muted-foreground leading-relaxed font-medium">
+                <h3 className="font-heading text-xl font-900 uppercase tracking-wide text-primary mb-3">El Documento</h3>
+                <p className="text-xl text-foreground/80 leading-relaxed font-medium">
                   Arquetipo + 5 adjetivos + voz por canal + tabla "Así sí / Así no" + 5 piezas reales + marcas referencia.
                 </p>
               </div>
@@ -44,8 +44,8 @@ export default function Slide02Objectives({ total }) {
                 <Sparkles className="w-6 h-6 text-primary" />
               </div>
               <div>
-                <h3 className="font-heading text-lg font-800 uppercase tracking-wide text-primary mb-2">La Herramienta</h3>
-                <p className="text-lg text-muted-foreground leading-relaxed font-medium">
+                <h3 className="font-heading text-xl font-900 uppercase tracking-wide text-primary mb-3">La Herramienta</h3>
+                <p className="text-xl text-foreground/80 leading-relaxed font-medium">
                   ChatGPT (diagnóstico, personalidad, tabla, piezas y "traductor de tono" al cierre). Nivel básico.
                 </p>
               </div>
@@ -53,9 +53,9 @@ export default function Slide02Objectives({ total }) {
           </div>
 
           <div className="flex items-center">
-            <BentoCard className="border-l-4 border-l-primary p-8 bg-primary/5">
-              <p className="text-xl text-foreground font-medium leading-relaxed">
-                <strong className="font-900 block text-primary uppercase tracking-widest text-sm mb-4">Conexión 1.1</strong>
+            <BentoCard className="border-l-4 border-l-primary p-10 bg-primary/5 shadow-xl shadow-primary/5">
+              <p className="text-2xl text-foreground font-medium leading-relaxed">
+                <strong className="font-900 block text-primary uppercase tracking-[0.2em] text-xs mb-5">Conexión 1.1</strong>
                 Pegarás el brief, el mapa de empatía y el elevator pitch de la sesión anterior en los prompts de personalidad.
               </p>
             </BentoCard>

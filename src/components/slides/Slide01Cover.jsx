@@ -16,7 +16,7 @@ export default function Slide01Cover({ total }) {
           <span className="block text-4xl md:text-6xl lg:text-7xl text-primary fade-up fade-up-3 tracking-tight">TU MARCA</span>
         </h1>
         
-        <p className="max-w-2xl mx-auto text-xl md:text-2xl text-muted-foreground mt-6 fade-up fade-up-4 font-medium">
+        <p className="max-w-3xl mx-auto text-2xl md:text-3xl text-muted-foreground mt-8 fade-up fade-up-4 font-medium leading-relaxed">
           Aprende a definir la personalidad, el tono y el estilo de tu comunicación usando Inteligencia Artificial.
         </p>
 
@@ -37,9 +37,9 @@ export default function Slide01Cover({ total }) {
           </div>
         </div>
 
-        <div className="mt-10 max-w-2xl fade-up fade-up-6">
-          <p className="text-lg text-muted-foreground leading-relaxed">
-            <span className="text-primary font-bold uppercase tracking-widest text-sm block mb-2">Entregable de hoy</span>
+        <div className="mt-12 max-w-3xl fade-up fade-up-6 bg-primary/5 rounded-2xl p-8 border border-primary/10">
+          <p className="text-xl text-foreground leading-relaxed font-medium">
+            <span className="text-primary font-900 uppercase tracking-[0.2em] text-xs block mb-3">Entregable de hoy</span>
             Guía de tono completa: arquetipo, 5 adjetivos clave, voz por canal, tabla "Así sí / Así no" y 5 piezas reales de contenido.
           </p>
         </div>
